@@ -8,11 +8,26 @@ Just like snacks, you can do without them, but it's better to have them.
 
 ## Development Plans 🛠️✨
 
-- **Get Image Info 🖼️:**  
-  Extract metadata and properties from images. 📋
+### Functional Components
+- **Seed Value:**  
+  Add randomization methods outside of the web interface for easier backend integration.
 
-- **Mask Blur 🎭:**  
-  Apply blur effects to specific masked areas. 🌫️
+- **String Operations:**  
+  Combine and replace strings.
 
-- **String Operations 🔤:**  
-  Perform advanced string manipulations. ✂️
+### Mask
+- **Feather Edges:**  
+  Smooth the edges of masks.
+
+- **Expand Inward/Outward:**  
+  Adjust mask boundaries.
+
+- **Mask Detection:**  
+  Detect objects like people or limbs.
+
+### Image
+- **Dimension Extraction:**  
+  Extract image dimensions.
+
+- **Scaling:**  
+  Resize images.
