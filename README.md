@@ -8,11 +8,11 @@ Just like snacks, you can do without them, but it's better to have them.
 
 ## Development Plans 🛠️✨
 
-- **Scale Images 📏:**  
-  Scale images based on total pixel count and ratio *(almost complete)*. 😎
+- **Get Image Info 🖼️:**  
+  Extract metadata and properties from images. 📋
 
-- **HDR Output 🌈:**  
-  Provide HDR for output images. 🚀
+- **Mask Blur 🎭:**  
+  Apply blur effects to specific masked areas. 🌫️
 
-- **Seed Generation 🌱:**  
-  Generate seed random numbers independently of the web to ease backend calls. 🌿
+- **String Operations 🔤:**  
+  Perform advanced string manipulations. ✂️
