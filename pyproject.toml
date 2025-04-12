@@ -1,7 +1,7 @@
 [project]
 name = "comfyui_snacknodes"  # Unique identifier for your node. Immutable after creation.
-description = "A collection of custom nodes for ComfyUI with image processing capabilities"
-version = "0.0.1"  # Custom Node version. Must be semantically versioned.
+description = "Integration of functional ComfyUI nodes. Designed to reduce reliance on multiple third-party node packages by providing a single comprehensive solution for all needs."
+version = "0.0.2"  # Custom Node version. Must be semantically versioned.
 license = { file = "LICENSE" }
 dependencies = [
     "torch==2.0.0",
@@ -16,5 +16,5 @@ Repository = "https://github.com/linksluckytime/comfyui_snacknodes"
 
 [tool.comfy]
 PublisherId = "linksluckytime"  # Publisher ID from Comfy Registry Website
-DisplayName = "SnackNodes Image 🍿"  # Display name for the Custom Node
-Icon = "🍿"  # Emoji icon
+DisplayName = "comfyui_snacknodes"  # Display name for the Custom Node
+Icon = "web/icon.png"  # Icon path relative to the package root
