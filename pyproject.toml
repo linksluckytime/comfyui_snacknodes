@@ -1,20 +1,45 @@
+[build-system]
+requires = ["setuptools>=70.0"]
+build-backend = "setuptools.build_meta"
+
 [project]
-name = "comfyui_snacknodes"  # Unique identifier for your node. Immutable after creation.
+name = "comfyui_snacknodes"
+version = "0.0.3"
 description = "Integration of functional ComfyUI nodes. Designed to reduce reliance on multiple third-party node packages by providing a single comprehensive solution for all needs."
-version = "0.0.2"  # Custom Node version. Must be semantically versioned.
-license = { file = "LICENSE" }
+authors = [
+  {name = "linksluckytime", email = "linksluckytime@gmail.com"}
+]
+readme = "README.md"
+license = {text = "GNU General Public License v3"}
+classifiers = []
 dependencies = [
-    "torch==2.0.0",
-    "numpy==1.21.0",
-    "pillow==9.0.0",
-    "comfyui==1.0.0"
+    "torch>=2.0.0",
+    "numpy>=1.21.0",
+    "pillow>=9.0.0"
+]
+
+[project.optional-dependencies]
+dev = [
+    "bump-my-version",
+    "coverage",  # testing
+    "mypy",  # linting
+    "pre-commit", # runs linting on commit
+    "pytest",  # testing
+    "ruff",  # linting
 ]
 
 [project.urls]
-Repository = "https://github.com/linksluckytime/comfyui_snacknodes"
-#  Used by Comfy Registry https://comfyregistry.org
+bugs = "https://github.com/linksluckytime/comfyui_snacknodes/issues"
+homepage = "https://github.com/linksluckytime/comfyui_snacknodes"
 
 [tool.comfy]
-PublisherId = "linksluckytime"  # Publisher ID from Comfy Registry Website
-DisplayName = "comfyui_snacknodes"  # Display name for the Custom Node
-Icon = "web/icon.png"  # Icon path relative to the package root
+PublisherId = "linksluckytime"
+DisplayName = "comfyui_snacknodes"
+Icon = "https://raw.githubusercontent.com/linksluckytime/comfyui_snacknodes/main/web/icon.png"
+
+[tool.setuptools]
+packages = ["comfyui_snacknodes"]
+package-dir = {"comfyui_snacknodes" = "comfyui_snacknodes"}
+
+[tool.setuptools.package-data]
+"*" = ["*.png"]

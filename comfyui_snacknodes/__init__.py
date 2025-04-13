@@ -1,5 +1,7 @@
 """ComfyUI SnackNodes package."""
 
+__version__ = "0.0.3"
+
 from .nodes.image_info import ImageInfo
 from .nodes.image_scaler import ImageScaler
 
@@ -9,8 +11,8 @@ NODE_CLASS_MAPPINGS = {
 }
 
 NODE_DISPLAY_NAME_MAPPINGS = {
-    "ImageInfo": "Image Info",
-    "ImageScaler": "Image Scaler",
+    "ImageInfo": "🍪 Image Info",
+    "ImageScaler": "🍪 Image Scaler",
 }
 
-__all__ = ["NODE_CLASS_MAPPINGS", "NODE_DISPLAY_NAME_MAPPINGS"]
+__all__ = ["NODE_CLASS_MAPPINGS", "NODE_DISPLAY_NAME_MAPPINGS"] 
