@@ -30,8 +30,13 @@ dev = [
 
 [tool.setuptools]
 packages = ["comfyui_snacknodes", "comfyui_snacknodes.nodes", "comfyui_snacknodes.utils", "comfyui_snacknodes.config"]
-package-dir = {"comfyui_snacknodes" = "."}
+package-dir = {"comfyui_snacknodes" = "src/comfyui_snacknodes"}
 
 [tool.setuptools.package-data]
 "*" = ["*.png"]
 "comfyui_snacknodes" = ["web/*"]
+
+[tool.comfy]
+PublisherId = "linksluckytime"
+DisplayName = "comfyui_snacknodes"
+Icon = "https://raw.githubusercontent.com/linksluckytime/comfyui_snacknodes/main/web/icon.png"
