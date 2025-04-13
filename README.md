@@ -1,53 +1,72 @@
-<div style="font-family: 'Georgia', 'Times New Roman', Times, serif;">
+# ComfyUI SnackNodes 🍿
 
-# ComfyUI SnackNodes
+A comprehensive collection of ComfyUI nodes designed to reduce reliance on multiple third-party node packages.
 
-一个功能丰富的 ComfyUI 节点集合，旨在减少对多个第三方节点包的依赖。
+> 需要中文说明？[点击这里](./README_CN.md) 🎯
 
-## 安装
+## Installation
 
-1. 克隆仓库：
+1. Clone the repository:
 ```bash
 git clone https://github.com/linksluckytime/comfyui_snacknodes.git
 cd comfyui_snacknodes
 ```
 
-2. 安装基础依赖：
+2. Install base dependencies:
 ```bash
 pip install -e .
 ```
 
-3. 如果需要使用人脸检测功能，安装额外依赖：
+3. For face detection features, install additional dependencies:
 ```bash
 pip install -e ".[face]"
 ```
 
-注意：在 macOS 上安装 dlib 可能需要先安装 CMake：
+Note: On macOS, you may need to install CMake first:
 ```bash
 brew install cmake
 ```
 
-## 模型下载
+## Model Download
 
-如果需要使用人脸检测功能，请下载以下模型文件：
+If you plan to use face detection features, download the following model:
 
-1. 下载人脸检测模型：
-   - 访问：http://dlib.net/files/shape_predictor_68_face_landmarks.dat.bz2
-   - 解压文件
-   - 将解压后的文件放在：`ComfyUI/models/dlib/` 目录下
+1. Face Detection Model:
+   - Download from: http://dlib.net/files/shape_predictor_68_face_landmarks.dat.bz2
+   - Extract the file
+   - Place it in: `ComfyUI/models/dlib/`
 
-## 功能节点
+## Available Nodes
 
-### 图像处理
-- ImageInfo：获取图像信息（宽度、高度、批处理大小、通道数）
-- ImageScaler：图像缩放，支持多种缩放方法
-- FaceDetector：人脸检测和特征点提取（需要安装额外依赖）
+### Image Processing
+- **ImageInfo 🍿**  
+  Extract image dimensions (width, height, batch size, channels).
 
-## 开发计划
-- [ ] 添加更多图像处理节点
-- [ ] 优化现有节点性能
-- [ ] 添加单元测试
-- [ ] 完善文档
+- **ImageScaler 🍿**  
+  Resize images with various methods (nearest, bilinear, bicubic, lanczos).
 
-## 许可证
+- **FaceDetector 🍿**  
+  Detect faces and facial landmarks, providing masks and control points.
+
+## Development Plans 🛠️✨
+
+### Functional Components
+- **Seed Value:**  
+  Add randomization methods outside of the web interface for easier backend integration.
+
+- **String Operations:**  
+  Combine and replace strings.
+
+### Mask Nodes
+- **Feather Edges:**  
+  Smooth the edges of masks.
+
+- **Expand Inward/Outward:**  
+  Adjust mask boundaries.
+
+- **Mask Detection:**  
+  Detect objects like people or limbs.
+
+## License
+
 GNU General Public License v3
