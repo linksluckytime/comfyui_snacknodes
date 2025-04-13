@@ -1,5 +1,7 @@
 include LICENSE
 include README.md
+include pyproject.toml
+include web/icon.png
 
 recursive-exclude * __pycache__
 recursive-exclude * *.py[co]
@@ -7,3 +9,5 @@ recursive-exclude * *.py[co]
 recursive-include docs *.rst conf.py Makefile make.bat *.jpg *.png *.gif
 
 graft src/comfyui_snacknodes/web
+
+recursive-include comfyui_snacknodes *.py

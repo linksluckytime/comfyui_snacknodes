@@ -7,6 +7,10 @@ build-backend = "setuptools.build_meta"
 name = "comfyui_snacknodes"
 description = "Integration of functional ComfyUI nodes. Designed to reduce reliance on multiple third-party node packages by providing a single comprehensive solution for all needs."
 version = "0.0.3"
+authors = [
+    {name = "linksluckytime", email = "linksluckytime@gmail.com"}
+]
+readme = "README.md"
 license = {text = "GNU General Public License v3"}
 dependencies = [
     "torch>=2.0.0",
@@ -23,15 +27,6 @@ dev = [
     "pytest",  # testing
     "ruff",  # linting
 ]
-
-[project.urls]
-bugs = "https://github.com/linksluckytime/comfyui_snacknodes/issues"
-homepage = "https://github.com/linksluckytime/comfyui_snacknodes"
-
-[tool.comfy]
-PublisherId = "linksluckytime"
-DisplayName = "comfyui_snacknodes"
-Icon = "https://raw.githubusercontent.com/linksluckytime/comfyui_snacknodes/main/web/icon.png"
 
 [tool.setuptools]
 packages = ["comfyui_snacknodes", "comfyui_snacknodes.nodes", "comfyui_snacknodes.utils", "comfyui_snacknodes.config"]
