@@ -15,10 +15,14 @@ license = {text = "GNU General Public License v3"}
 dependencies = [
     "torch>=2.0.0",
     "numpy>=1.21.0",
-    "pillow>=9.0.0"
+    "pillow>=9.0.0",
+    "opencv-python-headless>=4.8.0"
 ]
 
 [project.optional-dependencies]
+face = [
+    "dlib>=19.24.0",
+]
 dev = [
     "bump-my-version",
     "coverage",  # testing

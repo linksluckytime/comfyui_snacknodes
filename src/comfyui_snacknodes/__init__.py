@@ -2,17 +2,20 @@
 
 __version__ = "0.0.3"
 
-from .nodes.image_info import ImageInfo
-from .nodes.image_scaler import ImageScaler
+from .nodes.images import ImageInfo, ImageScaler, FaceDetector
 
 NODE_CLASS_MAPPINGS = {
     "ImageInfo": ImageInfo,
     "ImageScaler": ImageScaler,
+    "FaceDetector": FaceDetector,
 }
 
 NODE_DISPLAY_NAME_MAPPINGS = {
-    "ImageInfo": "🍪 Image Info",
-    "ImageScaler": "🍪 Image Scaler",
+    "ImageInfo": "🍿 Image Info",
+    "ImageScaler": "🍿 Image Scaler",
+    "FaceDetector": "🍿 Face Detector",
 }
 
-__all__ = ["NODE_CLASS_MAPPINGS", "NODE_DISPLAY_NAME_MAPPINGS"] 
+WEB_DIRECTORY = "web"
+
+__all__ = ["NODE_CLASS_MAPPINGS", "NODE_DISPLAY_NAME_MAPPINGS", "WEB_DIRECTORY"] 
