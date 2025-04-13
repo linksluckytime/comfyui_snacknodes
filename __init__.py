@@ -1,16 +1,20 @@
-"""Top-level package for comfyui_snacknodes."""
+"""ComfyUI SnackNodes package."""
 
-__all__ = [
-    "NODE_CLASS_MAPPINGS",
-    "NODE_DISPLAY_NAME_MAPPINGS",
-    "WEB_DIRECTORY",
-]
+__version__ = "0.0.3"
 
-__author__ = """linksluckytime"""
-__email__ = "linksluckytime@gmail.com"
-__version__ = "0.0.1"
+from comfyui_snacknodes.nodes import ImageInfo, ImageScaler
 
-from .src.comfyui_snacknodes.nodes import NODE_CLASS_MAPPINGS
-from .src.comfyui_snacknodes.nodes import NODE_DISPLAY_NAME_MAPPINGS
+NODE_CLASS_MAPPINGS = {
+    "ImageInfo": ImageInfo,
+    "ImageScaler": ImageScaler,
+}
 
-WEB_DIRECTORY = "./web"
+NODE_DISPLAY_NAME_MAPPINGS = {
+    "ImageInfo": "Image Info 🍿",
+    "ImageScaler": "Image Scaler 🍿",
+}
+
+WEB_DIRECTORY = "web"
+
+# 导出节点映射
+__all__ = ["NODE_CLASS_MAPPINGS", "NODE_DISPLAY_NAME_MAPPINGS", "WEB_DIRECTORY"] 
