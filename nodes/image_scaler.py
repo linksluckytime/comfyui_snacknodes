@@ -33,12 +33,6 @@ class ImageScaler(BaseNode):
     # 是否启用调试输出
     ENABLE_DEBUG = True
 
-    # 像素预算映射表（修正为正确的平方值）
-    PIXEL_BUDGET_MAP = {
-        "512px²": 512 * 512,    # 262,144 pixels
-        "1024px²": 1024 * 1024  # 1,048,576 pixels
-    }
-
     @classmethod
     def INPUT_TYPES(cls) -> Dict:
         """Define the input types for this node.
@@ -93,8 +87,8 @@ class ImageScaler(BaseNode):
         if len(image.shape) != 4:
             raise ValueError("输入张量必须是4维的 (B,H,W,C)")
             
-        # 获取像素预算值（修正为正确的平方值）
-        pixel_budget = self.PIXEL_BUDGET_MAP.get(pixels)
+        # 获取像素预算值
+        pixel_budget = PIXEL_BUDGETS.get(pixels)
         if not pixel_budget:
             raise ValueError(f"无效的像素预算: {pixels}")
 
