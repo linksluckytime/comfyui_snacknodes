@@ -1,6 +1,6 @@
 # pyproject.toml
 [build-system]
-requires = ["setuptools>=70.0"]
+requires = ["setuptools"]
 build-backend = "setuptools.build_meta"
 
 [project]
@@ -13,15 +13,15 @@ authors = [
 readme = "README.md"
 license = {text = "GNU General Public License v3"}
 dependencies = [
-    "torch>=2.0.0",
-    "numpy>=1.21.0",
-    "pillow>=9.0.0",
-    "opencv-python-headless>=4.8.0"
+    "torch",
+    "numpy",
+    "pillow",
+    "opencv-python-headless"
 ]
 
 [project.optional-dependencies]
 face = [
-    "dlib>=19.24.0",
+    "dlib",
 ]
 dev = [
     "bump-my-version",
