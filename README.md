@@ -2,7 +2,7 @@
 
 # SnackNodes 🍿
 
-Just like snacks, you can do without them, but it's better to have them.  
+When life doesn’t dish out candy, go grab a bag of awesome snacks to fill that void. 
 
 
 

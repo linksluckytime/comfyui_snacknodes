@@ -45,5 +45,5 @@ package-dir = {"comfyui_snacknodes" = "."}
 
 [tool.comfy]
 PublisherId = "linksluckytime"
-DisplayName = "SnackNodes 🍿"
+DisplayName = "comfyui_snacknodes"
 Icon = "https://raw.githubusercontent.com/linksluckytime/comfyui_snacknodes/main/web/icon.png"
