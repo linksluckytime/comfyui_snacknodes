@@ -40,8 +40,10 @@ RELATIVE_POSITIONS = [
 # Pixel budgets
 PIXEL_BUDGETS = {
     "512px²": 512,
-    "1024px²": 1024
+    "768px²": 768,
+    "1024px²": 1024,
+    "2048px²": 2048
 }
 
 # Scaling factors
-SCALING_FACTORS = [8, 16, 32, 64] 
+SCALING_FACTORS = [2, 8, 16, 32, 64] 

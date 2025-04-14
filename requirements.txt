@@ -1,19 +1,5 @@
 # Core dependencies
-torch
-numpy
-pillow
-opencv-python-headless
-dlib
-bump-my-version
-coverage
-mypy
-pre-commit
-pytest
-ruff
-
-# Development dependencies
-black==23.7.0
-isort==5.12.0
-pytest-cov==4.1.0
-sphinx==7.2.6
-sphinx-rtd-theme==1.3.0
+torch>=2.0.0
+numpy>=1.21.0
+pillow>=9.0.0
+comfyui>=1.0.0

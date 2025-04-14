@@ -1,12 +1,12 @@
 # pyproject.toml
 [build-system]
-requires = ["setuptools"]
+requires = ["setuptools>=65.0.0"]
 build-backend = "setuptools.build_meta"
 
 [project]
 name = "comfyui_snacknodes"
-description = "Integration of functional ComfyUI nodes. Designed to reduce reliance on multiple third-party node packages by providing a single comprehensive solution for all needs."
-version = "0.0.4"
+description = "A comprehensive collection of ComfyUI nodes designed to reduce reliance on multiple third-party node packages."
+version = "0.0.5"
 authors = [
     {name = "linksluckytime", email = "linksluckytime@gmail.com"}
 ]
@@ -19,28 +19,31 @@ dependencies = [
     "opencv-python-headless"
 ]
 
+[project.urls]
+Repository = "https://github.com/linksluckytime/comfyui_snacknodes"
+
 [project.optional-dependencies]
 face = [
     "dlib",
 ]
 dev = [
     "bump-my-version",
-    "coverage",  # testing
-    "mypy",  # linting
-    "pre-commit", # runs linting on commit
-    "pytest",  # testing
-    "ruff",  # linting
+    "coverage",
+    "mypy",
+    "pre-commit",
+    "pytest",
+    "ruff",
 ]
 
 [tool.setuptools]
-packages = ["comfyui_snacknodes", "comfyui_snacknodes.nodes", "comfyui_snacknodes.utils", "comfyui_snacknodes.config"]
-package-dir = {"comfyui_snacknodes" = "src/comfyui_snacknodes"}
+packages = ["comfyui_snacknodes", "nodes", "utils", "config"]
+package-dir = {"comfyui_snacknodes" = "."}
 
 [tool.setuptools.package-data]
-"*" = ["*.png"]
+"*" = ["*.png", "*.json"]
 "comfyui_snacknodes" = ["web/*"]
 
 [tool.comfy]
 PublisherId = "linksluckytime"
-DisplayName = "comfyui_snacknodes"
+DisplayName = "SnackNodes 🍿"
 Icon = "https://raw.githubusercontent.com/linksluckytime/comfyui_snacknodes/main/web/icon.png"
