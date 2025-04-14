@@ -1,8 +1,10 @@
 """ComfyUI SnackNodes package."""
 
-__version__ = "0.0.3"
+__version__ = "0.0.5"
 
-from comfyui_snacknodes.nodes import ImageInfo, ImageScaler
+# 导入节点
+from .nodes.image_info import ImageInfo
+from .nodes.image_scaler import ImageScaler
 
 NODE_CLASS_MAPPINGS = {
     "ImageInfo": ImageInfo,

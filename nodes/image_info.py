@@ -2,12 +2,11 @@
 
 import torch
 from typing import Dict, Tuple
-from comfyui_snacknodes.nodes.base_node import BaseNode
+from .base_node import BaseNode
 
 class ImageInfo(BaseNode):
     """A node that provides information about an input image tensor."""
     
-    CATEGORY = "SnackNodes"
     RETURN_TYPES = ("INT", "INT", "INT", "INT")
     RETURN_NAMES = ("width", "height", "batch_size", "channels")
     FUNCTION = "get_image_info"
@@ -41,7 +40,7 @@ class ImageInfo(BaseNode):
             raise ValueError("Input tensor must be 4-dimensional (B,H,W,C)")
         batch_size, height, width, channels = image.shape
         return width, height, batch_size, channels
-    
+        
     def _process(self, **kwargs) -> Tuple[int, int, int, int]:
         """Process the node's inputs and return outputs.
         

@@ -8,6 +8,8 @@ recursive-exclude * *.py[co]
 
 recursive-include docs *.rst conf.py Makefile make.bat *.jpg *.png *.gif
 
-graft src/comfyui_snacknodes/web
+graft web
 
-recursive-include comfyui_snacknodes *.py
+recursive-include nodes *.py
+recursive-include utils *.py
+recursive-include config *.py

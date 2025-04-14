@@ -1,4 +1,4 @@
-"""Configuration package for ComfyUI SnackNodes."""
+"""Configuration constants for SnackNodes."""
 
 from .constants import (
     PADDING_COLORS,
