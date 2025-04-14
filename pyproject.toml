@@ -6,38 +6,24 @@ build-backend = "setuptools.build_meta"
 [project]
 name = "comfyui_snacknodes"
 description = "A comprehensive collection of ComfyUI nodes designed to reduce reliance on multiple third-party node packages."
-version = "0.0.5"
+version = "0.0.6"
 authors = [
     {name = "linksluckytime", email = "linksluckytime@gmail.com"}
 ]
 readme = "README.md"
 license = {text = "GNU General Public License v3"}
 dependencies = [
-    "torch",
-    "numpy",
-    "pillow",
-    "opencv-python-headless"
+    "torch>=2.0.0",
+    "numpy>=1.21.0",
+    "pillow>=9.0.0",
+    "opencv-python-headless>=4.5.0"
 ]
 
 [project.urls]
 Repository = "https://github.com/linksluckytime/comfyui_snacknodes"
 
-[project.optional-dependencies]
-face = [
-    "dlib",
-]
-dev = [
-    "bump-my-version",
-    "coverage",
-    "mypy",
-    "pre-commit",
-    "pytest",
-    "ruff",
-]
-
 [tool.setuptools]
-packages = ["comfyui_snacknodes", "nodes", "utils", "config"]
-package-dir = {"comfyui_snacknodes" = "."}
+packages = ["nodes", "utils", "config"]
 
 [tool.setuptools.package-data]
 "*" = ["*.png", "*.json"]

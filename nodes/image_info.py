@@ -1,53 +1,41 @@
-"""ImageInfo node for ComfyUI that provides information about input images."""
+"""Image info node for ComfyUI.
 
+This node provides detailed information about input images, including dimensions,
+channels, batch size, and other relevant properties. It's useful for debugging
+and understanding the characteristics of images in your workflow.
+"""
+
+import logging
 import torch
-from typing import Dict, Tuple
 from .base_node import BaseNode
 
 class ImageInfo(BaseNode):
-    """A node that provides information about an input image tensor."""
+    """Node for displaying image information."""
+    
+    CATEGORY = "SnackNodes"
+    
+    # 添加UI可显示的值
+    @classmethod
+    def IS_CHANGED(cls, image):
+        """通知ComfyUI节点需要重新渲染，用于显示动态值。"""
+        return float("NaN")
+    
+    @classmethod
+    def INPUT_TYPES(cls):
+        """Define the input types for the node."""
+        return {
+            "required": {
+                "image": ("IMAGE",),
+            }
+        }
     
     RETURN_TYPES = ("INT", "INT", "INT", "INT")
     RETURN_NAMES = ("width", "height", "batch_size", "channels")
     FUNCTION = "get_image_info"
-
-    @classmethod
-    def INPUT_TYPES(cls) -> Dict:
-        """Define the input types for this node.
-        
-        Returns:
-            Dictionary containing input type definitions
-        """
-        return {
-            "required": {
-                "image": ("IMAGE", {"description": "Input image tensor (B,H,W,C format)"}),
-            },
-        }
-
-    def get_image_info(self, image: torch.Tensor) -> Tuple[int, int, int, int]:
-        """Extract and return image dimensions.
-        
-        Args:
-            image: Input image tensor in B,H,W,C format
-            
-        Returns:
-            Tuple containing width, height, batch_size, and channels
-            
-        Raises:
-            ValueError: If input tensor is not 4-dimensional
-        """
-        if len(image.shape) != 4:
-            raise ValueError("Input tensor must be 4-dimensional (B,H,W,C)")
+    
+    def get_image_info(self, image: torch.Tensor):
+        """Get image information."""
+        # Get image dimensions
         batch_size, height, width, channels = image.shape
-        return width, height, batch_size, channels
         
-    def _process(self, **kwargs) -> Tuple[int, int, int, int]:
-        """Process the node's inputs and return outputs.
-        
-        Args:
-            **kwargs: Input parameters for the node
-            
-        Returns:
-            Tuple containing width, height, batch_size, and channels
-        """
-        return self.get_image_info(kwargs["image"]) 
+        return (width, height, batch_size, channels) 

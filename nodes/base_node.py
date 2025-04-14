@@ -22,8 +22,9 @@ class BaseNode:
     def _process(self, **kwargs) -> Tuple:
         """Process the node's inputs and return outputs.
         
-        This method should be overridden by subclasses to implement
-        the node's functionality.
+        This method handles the common logic of calling the function specified
+        in the FUNCTION class attribute. Subclasses typically don't need to
+        override this method, just specify a FUNCTION value and implement that method.
         
         Args:
             **kwargs: Input parameters for the node
