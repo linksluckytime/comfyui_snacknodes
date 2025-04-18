@@ -140,3 +140,8 @@ Thumbs.db
 
 # Temporary files
 h origin --delete*
+
+# 临时脚本文件
+deploy.ps1
+deploy.bat
+how-ref --tags
