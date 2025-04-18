@@ -6,7 +6,7 @@ and understanding the characteristics of images in your workflow.
 """
 
 import torch
-from .base_node import BaseNode
+from ..base_node import BaseNode
 
 class ImageInfo(BaseNode):
     """节点用于获取图像信息。"""

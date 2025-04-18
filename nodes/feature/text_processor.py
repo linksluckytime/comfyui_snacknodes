@@ -1,16 +1,27 @@
 """Text Processor node for ComfyUI."""
 
 import re
+import logging
 from typing import Dict, Tuple
 from ..base_node import BaseNode
 
+# 配置日志
+logging.basicConfig(level=logging.INFO)
+logger = logging.getLogger(__name__)
+
 class TextProcessor(BaseNode):
-    """A node for processing strings with various operations."""
+    """A node for processing strings with various operations.
+    
+    This node provides two main operations:
+    1. Concatenate: Combines multiple text inputs with optional optimization
+    2. Search and Replace: Replaces occurrences of search text with replacement text
+    """
     
     CATEGORY = "SnackNodes"
     RETURN_TYPES = ("STRING",)
     RETURN_NAMES = ("text",)
     FUNCTION = "process_strings"
+    OUTPUT_NODE = True  # 启用输出节点功能
     
     @classmethod
     def INPUT_TYPES(cls) -> Dict:
@@ -19,17 +30,17 @@ class TextProcessor(BaseNode):
             "required": {
                 "operation": (["concatenate", "search_replace"],),
                 "optimize_concatenation": ("BOOLEAN", {"default": False}),
-                "text1": ("STRING", {
+                "search_text": ("STRING", {
                     "multiline": True,
                     "default": "",
                     "placeholder": "Concatenate: First part | Search: Text to find"
                 }),
-                "text2": ("STRING", {
+                "replace_text": ("STRING", {
                     "multiline": True,
                     "default": "",
                     "placeholder": "Concatenate: Second part | Search: Replacement text"
                 }),
-                "text3": ("STRING", {
+                "target_text": ("STRING", {
                     "multiline": True,
                     "default": "",
                     "placeholder": "Concatenate: Third part | Search: Target text to search in"
@@ -38,34 +49,43 @@ class TextProcessor(BaseNode):
         }
     
     def process_strings(self, operation: str, optimize_concatenation: bool, 
-                       text1: str, text2: str, text3: str) -> Tuple[str]:
+                       search_text: str, replace_text: str, target_text: str) -> Tuple[str]:
         """Process the input strings based on the selected operation.
         
         Args:
-            operation: The operation to perform
+            operation: The operation to perform ("concatenate" or "search_replace")
             optimize_concatenation: Whether to optimize the concatenated text
-            text1: First input text
-            text2: Second input text
-            text3: Third input text
+            search_text: Text to search for or first part to concatenate
+            replace_text: Replacement text or second part to concatenate
+            target_text: Target text to search in or third part to concatenate
             
         Returns:
-            Tuple containing the processed text
+            Tuple containing the processed text and UI display information
+            
+        Raises:
+            Exception: If an error occurs during processing
         """
         try:
+            logger.info(f"Processing text with operation: {operation}")
+            
             if operation == "concatenate":
                 # 使用filter过滤空值，并使用join添加分隔符
-                texts = filter(None, [text1, text2, text3])
+                texts = filter(None, [search_text, replace_text, target_text])
                 result = (", " if optimize_concatenation else "").join(texts)
+                logger.debug(f"Concatenated result: {result}")
             else:  # search_replace
                 # 确保所有输入不为None
-                text1 = text1 if text1 is not None else ""
-                text2 = text2 if text2 is not None else ""
-                text3 = text3 if text3 is not None else ""
+                search_text = search_text if search_text is not None else ""
+                replace_text = replace_text if replace_text is not None else ""
+                target_text = target_text if target_text is not None else ""
                 
-                # 执行替换操作：在text3中搜索text1并替换为text2
-                result = text3.replace(text1, text2)
+                # 执行替换操作
+                result = target_text.replace(search_text, replace_text)
+                logger.debug(f"Search and replace result: {result}")
             
-            return (result,)
+            # 返回结果和UI显示信息
+            return {"ui": {"text": (result,)}, "result": (result,)}
         except Exception as e:
+            logger.error(f"Error processing text: {str(e)}")
             # 如果发生错误，返回空字符串
-            return ("",) 
+            return {"ui": {"text": ("",)}, "result": ("",)} 

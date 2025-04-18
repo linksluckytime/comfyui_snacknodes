@@ -1,7 +1,7 @@
 """Node definitions for comfyui_snacknodes."""
 
-from .image_scaler import ImageScaler
-from .image_info import ImageInfo
+from .images.image_scaler import ImageScaler
+from .images.image_info import ImageInfo
 
 NODE_CLASS_MAPPINGS = {
     "ImageScaler": ImageScaler,
