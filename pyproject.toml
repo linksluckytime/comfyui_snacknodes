@@ -5,8 +5,8 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "comfyui_snacknodes"
-description = "A comprehensive collection of ComfyUI nodes designed to reduce reliance on multiple third-party node packages."
-version = "0.0.8"
+description = "When life doesn't dish out candy, go grab a bag of awesome snacks to fill that void."
+version = "0.0.9"
 authors = [
     {name = "linksluckytime", email = "linksluckytime@gmail.com"}
 ]

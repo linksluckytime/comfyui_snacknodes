@@ -4,8 +4,8 @@ import torch
 import numpy as np
 import math
 from PIL import Image
-from typing import Dict, Tuple, Optional, Any
-from ..base_node import BaseNode
+from typing import Dict, Tuple, Optional, Any, List, Union
+from ..common.base_node import BaseNode
 from ...config.constants import (
     PADDING_COLORS,
     INTERPOLATION_METHODS,
@@ -19,22 +19,151 @@ from ...utils.image_utils import (
     scale_with_padding
 )
 
+def _generate_candidate_sizes(
+    width: int,
+    height: int,
+    scaling_factor: int,
+    min_size: int
+) -> List[Tuple[int, int]]:
+    """Generate candidate sizes by rounding up and down to scaling factor.
+    
+    Args:
+        width: Original width
+        height: Original height
+        scaling_factor: Size alignment factor
+        min_size: Minimum allowed size
+        
+    Returns:
+        List of candidate (width, height) tuples
+        
+    Raises:
+        ValueError: If input parameters are invalid
+    """
+    if width <= 0 or height <= 0:
+        raise ValueError("Width and height must be positive")
+    if scaling_factor <= 0:
+        raise ValueError("Scaling factor must be positive")
+    if min_size <= 0:
+        raise ValueError("Minimum size must be positive")
+        
+    candidates = []
+    
+    # Round up sizes
+    w1 = ((width + scaling_factor - 1) // scaling_factor) * scaling_factor
+    h1 = ((height + scaling_factor - 1) // scaling_factor) * scaling_factor
+    
+    # Round down sizes
+    w2 = (width // scaling_factor) * scaling_factor
+    h2 = (height // scaling_factor) * scaling_factor
+    
+    # Generate all possible combinations
+    for w in [w1, w2]:
+        if w < min_size:
+            continue
+        for h in [h1, h2]:
+            if h < min_size:
+                continue
+            candidates.append((w, h))
+            
+    return candidates
+
+def _select_best_size(
+    candidates: List[Tuple[int, int, float, int]],
+    aspect_ratio: float,
+    pixel_budget: int
+) -> Optional[Tuple[int, int]]:
+    """Select the best size from candidates based on ratio deviation and pixel count.
+    
+    Args:
+        candidates: List of (width, height, ratio_diff, pixels) tuples
+        aspect_ratio: Original aspect ratio
+        pixel_budget: Maximum allowed pixels
+        
+    Returns:
+        Tuple of (width, height) or None if no valid candidates
+        
+    Raises:
+        ValueError: If input parameters are invalid
+    """
+    if not candidates:
+        return None
+    if aspect_ratio <= 0:
+        raise ValueError("Aspect ratio must be positive")
+    if pixel_budget <= 0:
+        raise ValueError("Pixel budget must be positive")
+        
+    # Sort by ratio deviation first, then pixel count
+    candidates.sort(key=lambda x: (x[2], -x[3]))
+    return candidates[0][:2]
+
+def _process_image(
+    image: torch.Tensor,
+    width: int,
+    height: int,
+    interpolation: Any,
+    padding: bool,
+    padding_color: Tuple[int, int, int, int],
+    position: str,
+    min_size: int
+) -> Image.Image:
+    """Process image with specified parameters.
+    
+    Args:
+        image: Input image tensor
+        width: Target width
+        height: Target height
+        interpolation: Interpolation method
+        padding: Whether to use padding
+        padding_color: RGBA color for padding
+        position: Image position
+        min_size: Minimum size
+        
+    Returns:
+        Processed PIL image
+        
+    Raises:
+        ValueError: If input parameters are invalid
+    """
+    if width <= 0 or height <= 0:
+        raise ValueError("Width and height must be positive")
+    if min_size <= 0:
+        raise ValueError("Minimum size must be positive")
+        
+    # Convert tensor to PIL image
+    img_data = (image[0].cpu().numpy() * 255).astype(np.uint8)
+    channels = image.shape[-1]
+    img = Image.fromarray(img_data, 'RGBA' if channels == 4 else 'RGB')
+    
+    # Process image
+    if padding:
+        return scale_with_padding(
+            image=img,
+            target_width=width,
+            target_height=height,
+            position=position,
+            interpolation=interpolation,
+            padding_color=padding_color,
+            min_size=min_size
+        )
+    else:
+        return img.resize((width, height), interpolation)
+
 class ImageScaler(BaseNode):
     """A node for scaling and transforming images with various options."""
     
+    # Class attributes
     RETURN_TYPES = ("IMAGE", "INT", "INT")
     RETURN_NAMES = ("image", "width", "height")
     FUNCTION = "scale_image"
-    OUTPUT_NODE = True  # 添加此属性以在节点上显示输出信息
-    CATEGORY = "SnackNodes"  # 修改分类到根目录
-
-    # 最小合理尺寸，避免创建过小的图像
-    MIN_REASONABLE_SIZE = 32  # 设置最小尺寸为32x32像素
-    # 是否启用调试输出
+    OUTPUT_NODE = True
+    CATEGORY = "SnackNodes"
+    
+    # Constants
+    MIN_REASONABLE_SIZE = 32
     ENABLE_DEBUG = True
-
+    
     @classmethod
-    def INPUT_TYPES(cls) -> Dict:
+    def INPUT_TYPES(cls) -> Dict[str, Dict[str, Any]]:
         """Define the input types for this node.
         
         Returns:
@@ -42,129 +171,130 @@ class ImageScaler(BaseNode):
         """
         return {
             "required": {
-                "image": ("IMAGE", {"description": "输入图像 (B,H,W,C 格式)"}),
+                "image": ("IMAGE", {"description": "Input image (B,H,W,C format)"}),
                 "keep_proportion": ("BOOLEAN", {
                     "default": True,
-                    "description": "等比缩放：保持原始图像比例"
+                    "description": "Maintain aspect ratio"
                 }),
                 "pixels": (list(PIXEL_BUDGETS.keys()), {
                     "default": "1024px²",
-                    "description": "像素总量：以1:1矩形为标准的目标像素数"
+                    "description": "Target pixel count"
                 }),
                 "scaling_factor": (SCALING_FACTORS, {
                     "default": 64,
-                    "description": "缩放因子：确保输出尺寸能被此数整除"
+                    "description": "Size alignment factor"
                 }),
                 "relative_position": (RELATIVE_POSITIONS, {
                     "default": "center",
-                    "description": "原图参考位置：图像在输出画布中的位置(九宫格)"
+                    "description": "Image position"
                 }),
                 "supersampling": (list(INTERPOLATION_METHODS.keys()), {
                     "default": "none",
-                    "description": "超级采样：图像插值方法"
+                    "description": "Interpolation method"
                 }),
                 "padding": ("BOOLEAN", {
                     "default": False,
-                    "description": "填充：是否在保持比例时添加填充"
+                    "description": "Use padding"
                 }),
                 "padding_method": (list(PADDING_COLORS.keys()), {
                     "default": "transparent",
-                    "description": "填充方式：填充区域的处理方式"
+                    "description": "Padding method"
                 }),
             },
         }
-
-    def debug_log(self, *args, **kwargs):
-        """Output debug information"""
+    
+    def debug_log(self, *args, **kwargs) -> None:
+        """Output debug information.
+        
+        Args:
+            *args: Arguments to print
+            **kwargs: Keyword arguments to print
+        """
         if self.ENABLE_DEBUG:
             print("[ImageScaler]", *args, **kwargs)
-
-    def scale_image(self, image: torch.Tensor, keep_proportion: bool, pixels: str, 
-                   scaling_factor: int, relative_position: str, supersampling: str, 
-                   padding: bool, padding_method: str) -> Tuple[torch.Tensor, int, int]:
-        """Scale and transform image according to specified logic."""
-        # Validate input
-        if len(image.shape) != 4:
-            raise ValueError("Input tensor must be 4-dimensional (B,H,W,C)")
+    
+    def scale_image(
+        self,
+        image: torch.Tensor,
+        keep_proportion: bool,
+        pixels: str,
+        scaling_factor: int,
+        relative_position: str,
+        supersampling: str,
+        padding: bool,
+        padding_method: str
+    ) -> Tuple[torch.Tensor, int, int]:
+        """Scale and transform image according to specified logic.
+        
+        Args:
+            image: Input image tensor
+            keep_proportion: Whether to maintain aspect ratio
+            pixels: Target pixel count
+            scaling_factor: Size alignment factor
+            relative_position: Image position
+            supersampling: Interpolation method
+            padding: Whether to use padding
+            padding_method: Padding method
             
-        # Get pixel budget value
-        pixel_budget = PIXEL_BUDGETS.get(pixels)
-        if not pixel_budget:
-            raise ValueError(f"Invalid pixel budget: {pixels}")
-
+        Returns:
+            Tuple of (output image, width, height)
+            
+        Raises:
+            ValueError: If input parameters are invalid
+        """
         try:
-            # Extract image information
+            # Validate input
+            if len(image.shape) != 4:
+                raise ValueError("Input tensor must be 4-dimensional (B,H,W,C)")
+                
+            # Get pixel budget
+            pixel_budget = PIXEL_BUDGETS.get(pixels)
+            if not pixel_budget:
+                raise ValueError(f"Invalid pixel budget: {pixels}")
+            
+            # Extract image info
             batch_size, height, width, channels = image.shape
             input_pixels = width * height
             aspect_ratio = width / height
             
-            # Get device information
-            device = image.device
+            # Log initial info
+            self.debug_log(f"Input: {width}x{height}, Pixels: {input_pixels}")
+            self.debug_log(f"Ratio: {aspect_ratio:.3f}")
+            self.debug_log(f"Target: {int(math.sqrt(pixel_budget))}x{int(math.sqrt(pixel_budget))}")
             
-            # Log initial information
-            self.debug_log(f"Input image size: {width}x{height}, Total pixels: {input_pixels}")
-            self.debug_log(f"Image ratio: {aspect_ratio:.3f}")
-            self.debug_log(f"Target pixel budget: {int(math.sqrt(pixel_budget))}x{int(math.sqrt(pixel_budget))} ({pixel_budget} pixels)")
-
             # Calculate target dimensions
             if keep_proportion:
-                # Maintain original aspect ratio
+                # Calculate base dimensions
                 if input_pixels > pixel_budget:
-                    # Need to downscale
                     new_width = min(width, int(math.sqrt(pixel_budget * aspect_ratio)))
                     new_height = min(height, int(math.sqrt(pixel_budget / aspect_ratio)))
                 else:
-                    # Need to upscale
-                    scale = math.sqrt(pixel_budget / input_pixels) * 0.99  # Slightly conservative
+                    scale = math.sqrt(pixel_budget / input_pixels) * 0.99
                     new_width = int(width * scale)
                     new_height = int(height * scale)
                 
-                # Ensure dimensions are not smaller than minimum
-                new_width = max(self.MIN_REASONABLE_SIZE, new_width)
-                new_height = max(self.MIN_REASONABLE_SIZE, new_height)
-                
-                # Generate multiple candidate sizes (round up and down to scaling factor)
+                # Generate and select best size
                 candidates = []
-                
-                # Round up sizes
-                w1 = ((new_width + scaling_factor - 1) // scaling_factor) * scaling_factor
-                h1 = ((new_height + scaling_factor - 1) // scaling_factor) * scaling_factor
-                
-                # Round down sizes
-                w2 = (new_width // scaling_factor) * scaling_factor
-                h2 = (new_height // scaling_factor) * scaling_factor
-                
-                # Generate all possible combinations
-                for w in [w1, w2]:
-                    if w < self.MIN_REASONABLE_SIZE:
+                for w, h in _generate_candidate_sizes(new_width, new_height, scaling_factor, self.MIN_REASONABLE_SIZE):
+                    pixels = w * h
+                    if pixels > pixel_budget:
                         continue
-                    for h in [h1, h2]:
-                        if h < self.MIN_REASONABLE_SIZE:
-                            continue
-                        # Calculate pixel count and ratio deviation
-                        pixels = w * h
-                        if pixels > pixel_budget:
-                            continue
-                        ratio = w / h
-                        ratio_diff = abs(ratio - aspect_ratio) / aspect_ratio
-                        candidates.append((w, h, ratio_diff, pixels))
+                    ratio = w / h
+                    ratio_diff = abs(ratio - aspect_ratio) / aspect_ratio
+                    candidates.append((w, h, ratio_diff, pixels))
                 
                 if candidates:
-                    # Sort by ratio deviation first
-                    candidates.sort(key=lambda x: (x[2], -x[3]))  # Prioritize smaller ratio deviation, then larger pixel count
-                    new_width, new_height, ratio_diff, pixels = candidates[0]
-                    self.debug_log(f"Selected best size option: {new_width}x{new_height} (Ratio deviation: {ratio_diff:.1%}, Pixels: {pixels})")
+                    new_width, new_height = _select_best_size(candidates, aspect_ratio, pixel_budget)
                 else:
-                    # If no suitable candidates, use conservative round down
                     new_width = max(self.MIN_REASONABLE_SIZE, (new_width // scaling_factor) * scaling_factor)
                     new_height = max(self.MIN_REASONABLE_SIZE, (new_height // scaling_factor) * scaling_factor)
             else:
-                # Don't maintain aspect ratio, use square
+                # Square output
                 square_size = int(math.sqrt(pixel_budget))
                 square_size = ((square_size + scaling_factor - 1) // scaling_factor) * scaling_factor
                 new_width = new_height = square_size
-
-            # Ensure not exceeding pixel budget
+            
+            # Ensure within pixel budget
             while new_width * new_height > pixel_budget:
                 if new_width >= new_height and new_width > scaling_factor:
                     new_width -= scaling_factor
@@ -172,104 +302,52 @@ class ImageScaler(BaseNode):
                     new_height -= scaling_factor
                 else:
                     break
-
-            # Finally ensure dimensions are not smaller than minimum
+            
+            # Final size validation
             new_width = max(self.MIN_REASONABLE_SIZE, new_width)
             new_height = max(self.MIN_REASONABLE_SIZE, new_height)
-
-            # Log calculation results
-            self.debug_log(f"Calculated target size: {new_width}x{new_height}")
-            self.debug_log(f"Target pixel count: {new_width * new_height}")
+            
+            # Log results
+            self.debug_log(f"Target: {new_width}x{new_height}")
+            self.debug_log(f"Pixels: {new_width * new_height}")
             if keep_proportion:
                 final_ratio = new_width / new_height
                 ratio_diff = abs(final_ratio - aspect_ratio) / aspect_ratio
                 self.debug_log(f"Final ratio: {final_ratio:.3f} (Deviation: {ratio_diff:.1%})")
-
-            # Prepare image processing
-            first_image = image[0].cpu().numpy()
-            img_data = (first_image * 255).astype(np.uint8)
             
-            # Ensure correct number of channels
-            if channels == 3:
-                img = Image.fromarray(img_data, 'RGB')
-            else:  # channels == 4
-                img = Image.fromarray(img_data, 'RGBA')
-            
-            # Get interpolation method
+            # Process image
             interp_method = INTERPOLATION_METHODS.get(supersampling, Image.NEAREST)
-
-            # Perform scaling
-            if padding and keep_proportion:
-                # Use padding
-                pad_color = PADDING_COLORS.get(padding_method, (0, 0, 0, 0))
-                
-                # If transparent padding, ensure output is RGBA mode
-                if padding_method == "transparent":
-                    # If original image has no alpha channel, add it
-                    if img.mode != 'RGBA':
-                        rgb_img = np.array(img)
-                        alpha = np.ones((*rgb_img.shape[:-1], 1), dtype=np.uint8) * 255
-                        img_rgba = np.concatenate([rgb_img, alpha], axis=-1)
-                        img = Image.fromarray(img_rgba, 'RGBA')
-                
-                # Use padding scaling function
-                img_resized = scale_with_padding(
-                    image=img,
-                    target_width=new_width,
-                    target_height=new_height,
-                    position=relative_position,
-                    interpolation=interp_method,
-                    padding_color=pad_color,
-                    min_size=self.MIN_REASONABLE_SIZE
-                )
-            else:
-                # Direct resize
-                img_resized = img.resize((new_width, new_height), interp_method)
-
-            # Get final dimensions
-            output_width, output_height = img_resized.size
-            self.debug_log(f"Final output size: {output_width}x{output_height}")
-
+            pad_color = PADDING_COLORS.get(padding_method, (0, 0, 0, 0))
+            
+            img_resized = _process_image(
+                image=image,
+                width=new_width,
+                height=new_height,
+                interpolation=interp_method,
+                padding=padding,
+                padding_color=pad_color,
+                position=relative_position,
+                min_size=self.MIN_REASONABLE_SIZE
+            )
+            
             # Convert back to tensor
             img_array = np.array(img_resized).astype(np.float32) / 255.0
+            output_channels = img_array.shape[-1]
             
             # Handle channel count
-            output_channels = img_array.shape[-1]
-            self.debug_log(f"Output image channels: {output_channels}")
-            
-            # Ensure output channels match input or handle transparency properly
             if output_channels != channels:
                 if padding_method == "transparent":
-                    # If using transparent padding, our output should be 4 channels
                     if output_channels == 4 and channels == 3:
-                        # If original image had no alpha channel, update channel count
                         channels = 4
                     elif output_channels == 3 and channels == 4:
-                        # Should not happen: transparent padding but output only has 3 channels
                         alpha = np.ones((*img_array.shape[:-1], 1), dtype=np.float32)
                         img_array = np.concatenate([img_array, alpha], axis=-1)
-                else:
-                    # Non-transparent padding, try to match input channel count
-                    if output_channels == 4 and channels == 3:
-                        img_array = img_array[..., :3]
-                    elif output_channels == 3 and channels == 4:
-                        alpha = np.ones((*img_array.shape[:-1], 1), dtype=np.float32)
-                        img_array = np.concatenate([img_array, alpha], axis=-1)
-
-            # Create output tensor
-            channels = img_array.shape[-1]  # Use final channel count
-            output_image = torch.zeros((batch_size, output_height, output_width, channels), 
-                                    dtype=torch.float32, device=device)
-            output_image[0] = torch.from_numpy(img_array).to(device)
             
-            # Copy to other batches
-            if batch_size > 1:
-                for i in range(1, batch_size):
-                    output_image[i] = output_image[0]
-
-            return output_image, output_width, output_height
-
+            # Create output tensor
+            output = torch.from_numpy(img_array).unsqueeze(0)
+            
+            return (output, new_width, new_height)
+            
         except Exception as e:
-            import traceback
-            traceback.print_exc()
-            raise ValueError(f"Error processing image: {str(e)}") 
+            self.debug_log(f"Error: {str(e)}")
+            raise 

@@ -2,12 +2,44 @@
 
 import re
 import logging
-from typing import Dict, Tuple
-from ..base_node import BaseNode
+from typing import Dict, Any, Tuple, List
+from ..common.base_node import BaseNode
 
 # 配置日志
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
+
+def _concatenate_texts(texts: List[str], optimize: bool = True) -> str:
+    """Concatenate multiple texts with optional optimization.
+    
+    Args:
+        texts: List of texts to concatenate
+        optimize: Whether to optimize the concatenation
+        
+    Returns:
+        Concatenated text
+    """
+    # 过滤空值并连接文本
+    valid_texts = [text for text in texts if text and text.strip()]
+    return (", " if optimize else "").join(valid_texts)
+
+def _search_replace(search: str, replace: str, target: str) -> str:
+    """Replace occurrences of search text with replacement text.
+    
+    Args:
+        search: Text to search for
+        replace: Replacement text
+        target: Target text to search in
+        
+    Returns:
+        Text with replacements made
+    """
+    # 确保输入不为None
+    search = search or ""
+    replace = replace or ""
+    target = target or ""
+    
+    return target.replace(search, replace)
 
 class TextProcessor(BaseNode):
     """A node for processing strings with various operations.
@@ -28,8 +60,8 @@ class TextProcessor(BaseNode):
         """Define the input types for this node."""
         return {
             "required": {
-                "operation": (["concatenate", "search_replace"],),
-                "optimize_concatenation": ("BOOLEAN", {"default": False}),
+                "operation": (["concatenate", "search_replace"], {"default": "concatenate"}),
+                "optimize_concatenation": ("BOOLEAN", {"default": True}),
                 "search_text": ("STRING", {
                     "multiline": True,
                     "default": "",
@@ -49,7 +81,7 @@ class TextProcessor(BaseNode):
         }
     
     def process_strings(self, operation: str, optimize_concatenation: bool, 
-                       search_text: str, replace_text: str, target_text: str) -> Tuple[str]:
+                       search_text: str, replace_text: str, target_text: str) -> Dict[str, Any]:
         """Process the input strings based on the selected operation.
         
         Args:
@@ -60,32 +92,26 @@ class TextProcessor(BaseNode):
             target_text: Target text to search in or third part to concatenate
             
         Returns:
-            Tuple containing the processed text and UI display information
+            Dictionary containing the processed text and UI display information
             
         Raises:
+            ValueError: If operation is invalid
             Exception: If an error occurs during processing
         """
         try:
             logger.info(f"Processing text with operation: {operation}")
             
             if operation == "concatenate":
-                # 使用filter过滤空值，并使用join添加分隔符
-                texts = filter(None, [search_text, replace_text, target_text])
-                result = (", " if optimize_concatenation else "").join(texts)
-                logger.debug(f"Concatenated result: {result}")
-            else:  # search_replace
-                # 确保所有输入不为None
-                search_text = search_text if search_text is not None else ""
-                replace_text = replace_text if replace_text is not None else ""
-                target_text = target_text if target_text is not None else ""
+                result = _concatenate_texts([search_text, replace_text, target_text], 
+                                         optimize_concatenation)
+            elif operation == "search_replace":
+                result = _search_replace(search_text, replace_text, target_text)
+            else:
+                raise ValueError(f"Invalid operation: {operation}")
                 
-                # 执行替换操作
-                result = target_text.replace(search_text, replace_text)
-                logger.debug(f"Search and replace result: {result}")
-            
-            # 返回结果和UI显示信息
+            logger.debug(f"Operation result: {result}")
             return {"ui": {"text": (result,)}, "result": (result,)}
+            
         except Exception as e:
             logger.error(f"Error processing text: {str(e)}")
-            # 如果发生错误，返回空字符串
             return {"ui": {"text": ("",)}, "result": ("",)} 

@@ -3,7 +3,35 @@
 import torch
 import numpy as np
 from PIL import Image
-from typing import Tuple, Optional, Any
+from typing import Tuple, Optional, Any, Union
+
+def _ensure_min_size(value: int, min_size: int) -> int:
+    """Ensure value is not smaller than minimum size.
+    
+    Args:
+        value: Value to check
+        min_size: Minimum allowed value
+        
+    Returns:
+        Value adjusted to minimum size if necessary
+    """
+    return max(min_size, value)
+
+def _align_to_factor(value: int, factor: int, min_size: int) -> int:
+    """Align value to nearest multiple of factor.
+    
+    Args:
+        value: Value to align
+        factor: Alignment factor
+        min_size: Minimum allowed value
+        
+    Returns:
+        Aligned value
+    """
+    aligned = (value // factor) * factor
+    if aligned < min_size:
+        aligned = ((value + factor - 1) // factor) * factor
+    return aligned
 
 def calculate_dimensions(
     width: int,
@@ -73,32 +101,17 @@ def calculate_dimensions(
             return width, height
     
     # Ensure dimensions are not smaller than minimum
-    new_width = max(new_width, min_size)
-    new_height = max(new_height, min_size)
+    new_width = _ensure_min_size(new_width, min_size)
+    new_height = _ensure_min_size(new_height, min_size)
     
     # Align to scaling factor
     if keep_proportion:
-        # Round down to scaling factor multiple
-        new_width_aligned = (new_width // scaling_factor) * scaling_factor
-        new_height_aligned = (new_height // scaling_factor) * scaling_factor
-        
-        # If aligned size too small, round up
-        if new_width_aligned < min_size:
-            new_width_aligned = ((new_width + scaling_factor - 1) // scaling_factor) * scaling_factor
-        
-        if new_height_aligned < min_size:
-            new_height_aligned = ((new_height + scaling_factor - 1) // scaling_factor) * scaling_factor
-        
-        new_width, new_height = new_width_aligned, new_height_aligned
+        new_width = _align_to_factor(new_width, scaling_factor, min_size)
+        new_height = _align_to_factor(new_height, scaling_factor, min_size)
     else:
         # Ensure target size is divisible by scaling factor
-        new_width = (target_size // scaling_factor) * scaling_factor
-        new_height = (target_size // scaling_factor) * scaling_factor
-        
-        # If aligned size too small, use minimum scaling factor multiple
-        if new_width < min_size or new_height < min_size:
-            new_width = max(min_size, scaling_factor)
-            new_height = max(min_size, scaling_factor)
+        new_width = _align_to_factor(target_size, scaling_factor, min_size)
+        new_height = _align_to_factor(target_size, scaling_factor, min_size)
     
     return new_width, new_height
 
@@ -143,10 +156,16 @@ def crop_image(
         
     Returns:
         Cropped PIL image
+        
+    Raises:
+        ValueError: If image is None or invalid
     """
+    if image is None:
+        raise ValueError("Input image cannot be None")
+        
     # Ensure target dimensions not smaller than minimum
-    target_width = max(min_size, target_width)
-    target_height = max(min_size, target_height)
+    target_width = _ensure_min_size(target_width, min_size)
+    target_height = _ensure_min_size(target_height, min_size)
     
     # Get original dimensions
     width, height = image.size
@@ -195,10 +214,16 @@ def scale_with_padding(
         
     Returns:
         Scaled and padded PIL image
+        
+    Raises:
+        ValueError: If image is None or invalid
     """
+    if image is None:
+        raise ValueError("Input image cannot be None")
+        
     # Ensure target dimensions not smaller than minimum
-    target_width = max(min_size, target_width)
-    target_height = max(min_size, target_height)
+    target_width = _ensure_min_size(target_width, min_size)
+    target_height = _ensure_min_size(target_height, min_size)
     
     # Get original dimensions
     width, height = image.size
@@ -211,8 +236,8 @@ def scale_with_padding(
     ratio = min(target_width / width, target_height / height)
     
     # Calculate scaled dimensions
-    new_width = max(min_size, int(width * ratio))
-    new_height = max(min_size, int(height * ratio))
+    new_width = _ensure_min_size(int(width * ratio), min_size)
+    new_height = _ensure_min_size(int(height * ratio), min_size)
     
     # Scale image
     resized_image = image.resize((new_width, new_height), interpolation)
