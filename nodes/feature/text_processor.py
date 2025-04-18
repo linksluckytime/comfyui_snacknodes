@@ -19,9 +19,18 @@ def _concatenate_texts(texts: List[str], optimize: bool = True) -> str:
     Returns:
         Concatenated text
     """
-    # 过滤空值并连接文本
-    valid_texts = [text for text in texts if text and text.strip()]
-    return (", " if optimize else "").join(valid_texts)
+    # 过滤空值
+    valid_texts = [text.strip() for text in texts if text and text.strip()]
+    
+    if not valid_texts:
+        return ""
+    
+    if optimize:
+        # 使用逗号连接，确保没有多余的空格
+        return ", ".join(valid_texts)
+    else:
+        # 不优化，直接连接
+        return "".join(valid_texts)
 
 def _search_replace(search: str, replace: str, target: str) -> str:
     """Replace occurrences of search text with replacement text.
