@@ -16,25 +16,6 @@ When life doesn't dish out candy, go grab a bag of awesome snacks to fill that v
   - Text Box: Create and manipulate text boxes with customizable properties
   - Text Processor: Process and transform text with various operations and formatting options
 
-## Development Roadmap 🛠️✨
-
-### Version 0.0.9 - Face Feature Detection
-- **Face Detection:**  
-  Detect faces in images and extract facial landmarks.
-
-- **Face Feature Analysis:**  
-  Analyze facial features including eyes, nose, mouth, and facial contours.
-
-- **Feature Visualization:**  
-  Visualize detected facial features with customizable overlays.
-
-- **Face Parsing to Mask:**  
-  Generate precise masks for different facial features (eyes, nose, mouth, etc.) using advanced face parsing models.
-
-### Version 0.1.0 - System Enhancement
-- **Global Random Seed:**  
-  Implement a system-wide random seed management for backend operations, providing more control over randomization compared to web-based random generation.
-
 ## Acknowledgements 🙏
 
 Special thanks to the following projects and their creators:
