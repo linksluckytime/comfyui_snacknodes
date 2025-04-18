@@ -19,83 +19,6 @@ from ...utils.image_utils import (
     scale_with_padding
 )
 
-def _generate_candidate_sizes(
-    width: int,
-    height: int,
-    scaling_factor: int,
-    min_size: int
-) -> List[Tuple[int, int]]:
-    """Generate candidate sizes by rounding up and down to scaling factor.
-    
-    Args:
-        width: Original width
-        height: Original height
-        scaling_factor: Size alignment factor
-        min_size: Minimum allowed size
-        
-    Returns:
-        List of candidate (width, height) tuples
-        
-    Raises:
-        ValueError: If input parameters are invalid
-    """
-    if width <= 0 or height <= 0:
-        raise ValueError("Width and height must be positive")
-    if scaling_factor <= 0:
-        raise ValueError("Scaling factor must be positive")
-    if min_size <= 0:
-        raise ValueError("Minimum size must be positive")
-        
-    candidates = []
-    
-    # Round up sizes
-    w1 = ((width + scaling_factor - 1) // scaling_factor) * scaling_factor
-    h1 = ((height + scaling_factor - 1) // scaling_factor) * scaling_factor
-    
-    # Round down sizes
-    w2 = (width // scaling_factor) * scaling_factor
-    h2 = (height // scaling_factor) * scaling_factor
-    
-    # Generate all possible combinations
-    for w in [w1, w2]:
-        if w < min_size:
-            continue
-        for h in [h1, h2]:
-            if h < min_size:
-                continue
-            candidates.append((w, h))
-            
-    return candidates
-
-def _select_best_size(
-    candidates: List[Tuple[int, int, float, int]],
-    aspect_ratio: float,
-    pixel_budget: int
-) -> Optional[Tuple[int, int]]:
-    """Select the best size from candidates based on ratio deviation and pixel count.
-    
-    Args:
-        candidates: List of (width, height, ratio_diff, pixels) tuples
-        aspect_ratio: Original aspect ratio
-        pixel_budget: Maximum allowed pixels
-        
-    Returns:
-        Tuple of (width, height) or None if no valid candidates
-        
-    Raises:
-        ValueError: If input parameters are invalid
-    """
-    if not candidates:
-        return None
-    if aspect_ratio <= 0:
-        raise ValueError("Aspect ratio must be positive")
-    if pixel_budget <= 0:
-        raise ValueError("Pixel budget must be positive")
-        
-    # Sort by ratio deviation first, then pixel count
-    candidates.sort(key=lambda x: (x[2], -x[3]))
-    return candidates[0][:2]
-
 def _process_image(
     image: torch.Tensor,
     width: int,
@@ -260,52 +183,17 @@ class ImageScaler(BaseNode):
             # Log initial info
             self.debug_log(f"Input: {width}x{height}, Pixels: {input_pixels}")
             self.debug_log(f"Ratio: {aspect_ratio:.3f}")
-            self.debug_log(f"Target: {int(math.sqrt(pixel_budget))}x{int(math.sqrt(pixel_budget))}")
+            self.debug_log(f"Target pixel budget: {pixel_budget}")
             
-            # Calculate target dimensions
-            if keep_proportion:
-                # Calculate base dimensions
-                if input_pixels > pixel_budget:
-                    new_width = min(width, int(math.sqrt(pixel_budget * aspect_ratio)))
-                    new_height = min(height, int(math.sqrt(pixel_budget / aspect_ratio)))
-                else:
-                    scale = math.sqrt(pixel_budget / input_pixels) * 0.99
-                    new_width = int(width * scale)
-                    new_height = int(height * scale)
-                
-                # Generate and select best size
-                candidates = []
-                for w, h in _generate_candidate_sizes(new_width, new_height, scaling_factor, self.MIN_REASONABLE_SIZE):
-                    pixels = w * h
-                    if pixels > pixel_budget:
-                        continue
-                    ratio = w / h
-                    ratio_diff = abs(ratio - aspect_ratio) / aspect_ratio
-                    candidates.append((w, h, ratio_diff, pixels))
-                
-                if candidates:
-                    new_width, new_height = _select_best_size(candidates, aspect_ratio, pixel_budget)
-                else:
-                    new_width = max(self.MIN_REASONABLE_SIZE, (new_width // scaling_factor) * scaling_factor)
-                    new_height = max(self.MIN_REASONABLE_SIZE, (new_height // scaling_factor) * scaling_factor)
-            else:
-                # Square output
-                square_size = int(math.sqrt(pixel_budget))
-                square_size = ((square_size + scaling_factor - 1) // scaling_factor) * scaling_factor
-                new_width = new_height = square_size
-            
-            # Ensure within pixel budget
-            while new_width * new_height > pixel_budget:
-                if new_width >= new_height and new_width > scaling_factor:
-                    new_width -= scaling_factor
-                elif new_height > scaling_factor:
-                    new_height -= scaling_factor
-                else:
-                    break
-            
-            # Final size validation
-            new_width = max(self.MIN_REASONABLE_SIZE, new_width)
-            new_height = max(self.MIN_REASONABLE_SIZE, new_height)
+            # Calculate dimensions using utility function
+            new_width, new_height = calculate_dimensions(
+                width=width,
+                height=height,
+                max_pixels=pixel_budget,
+                scaling_factor=scaling_factor,
+                keep_proportion=keep_proportion,
+                min_size=self.MIN_REASONABLE_SIZE
+            )
             
             # Log results
             self.debug_log(f"Target: {new_width}x{new_height}")

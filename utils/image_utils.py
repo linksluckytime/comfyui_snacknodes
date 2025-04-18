@@ -5,20 +5,8 @@ import numpy as np
 from PIL import Image
 from typing import Tuple, Optional, Any, Union
 
-def _ensure_min_size(value: int, min_size: int) -> int:
-    """Ensure value is not smaller than minimum size.
-    
-    Args:
-        value: Value to check
-        min_size: Minimum allowed value
-        
-    Returns:
-        Value adjusted to minimum size if necessary
-    """
-    return max(min_size, value)
-
 def _align_to_factor(value: int, factor: int, min_size: int) -> int:
-    """Align value to nearest multiple of factor.
+    """Align value to nearest multiple of factor, ensuring minimum size.
     
     Args:
         value: Value to align
@@ -28,10 +16,9 @@ def _align_to_factor(value: int, factor: int, min_size: int) -> int:
     Returns:
         Aligned value
     """
-    aligned = (value // factor) * factor
-    if aligned < min_size:
-        aligned = ((value + factor - 1) // factor) * factor
-    return aligned
+    if value < min_size:
+        return ((min_size + factor - 1) // factor) * factor
+    return ((value + factor - 1) // factor) * factor
 
 def calculate_dimensions(
     width: int,
@@ -42,11 +29,6 @@ def calculate_dimensions(
     min_size: int = 1
 ) -> Tuple[int, int]:
     """Calculate new image dimensions based on specified logic.
-    
-    Logic flow:
-    1. Calculate input image ratio
-    2. Compare input image total pixels with target pixel limit
-    3. Calculate new dimensions based on different cases
     
     Args:
         width: Original width
@@ -59,59 +41,45 @@ def calculate_dimensions(
     Returns:
         Tuple of (new_width, new_height)
     """
+    if width <= 0 or height <= 0:
+        raise ValueError("Width and height must be positive")
+    if max_pixels <= 0:
+        raise ValueError("Maximum pixels must be positive")
+    if scaling_factor <= 0:
+        raise ValueError("Scaling factor must be positive")
+    if min_size <= 0:
+        raise ValueError("Minimum size must be positive")
+        
     # Calculate input image total pixels and ratio
     input_pixels = width * height
     original_ratio = width / height if height > 0 else 1.0
     
-    # Calculate base target size (square side length)
-    target_size = int(np.sqrt(max_pixels))
-    
-    # Initialize new dimensions
-    new_width, new_height = width, height
-    
-    # Case 1: Input image pixels > target pixels
-    if input_pixels > max_pixels:
-        if keep_proportion:
-            # Scale down while maintaining proportion
-            scale = np.sqrt(max_pixels / input_pixels)
-            new_width = int(width * scale)
-            new_height = int(height * scale)
-        else:
-            # Stretch to target square without maintaining proportion
-            new_width = target_size
-            new_height = target_size
-    
-    # Case 2: Input image pixels < target pixels
-    elif input_pixels < max_pixels:
-        if keep_proportion:
-            # Scale up while maintaining proportion, but not exceeding target area
-            max_scale = np.sqrt(max_pixels / input_pixels)
-            scale = max_scale * 0.99  # Use 99% to prevent rounding errors
-            new_width = int(width * scale)
-            new_height = int(height * scale)
-        else:
-            # Stretch to target square without maintaining proportion
-            new_width = target_size
-            new_height = target_size
-    
-    # Case 3: Input image pixels = target pixels
-    else:  # input_pixels == max_pixels
-        # Check if both sides are divisible by scaling factor
-        if width % scaling_factor == 0 and height % scaling_factor == 0:
-            return width, height
-    
-    # Ensure dimensions are not smaller than minimum
-    new_width = _ensure_min_size(new_width, min_size)
-    new_height = _ensure_min_size(new_height, min_size)
-    
-    # Align to scaling factor
     if keep_proportion:
-        new_width = _align_to_factor(new_width, scaling_factor, min_size)
-        new_height = _align_to_factor(new_height, scaling_factor, min_size)
+        # Calculate scale factor based on pixel budget
+        if input_pixels > max_pixels:
+            scale = np.sqrt(max_pixels / input_pixels)
+        else:
+            scale = np.sqrt(max_pixels / input_pixels) * 0.99
+            
+        # Calculate new dimensions
+        new_width = int(width * scale)
+        new_height = int(height * scale)
     else:
-        # Ensure target size is divisible by scaling factor
-        new_width = _align_to_factor(target_size, scaling_factor, min_size)
-        new_height = _align_to_factor(target_size, scaling_factor, min_size)
+        # Square output
+        new_width = new_height = int(np.sqrt(max_pixels))
+    
+    # Align dimensions to scaling factor
+    new_width = _align_to_factor(new_width, scaling_factor, min_size)
+    new_height = _align_to_factor(new_height, scaling_factor, min_size)
+    
+    # Ensure within pixel budget
+    while new_width * new_height > max_pixels:
+        if new_width >= new_height and new_width > scaling_factor:
+            new_width -= scaling_factor
+        elif new_height > scaling_factor:
+            new_height -= scaling_factor
+        else:
+            break
     
     return new_width, new_height
 
@@ -120,20 +88,19 @@ def _calculate_position(
     source_size: int,
     target_size: int
 ) -> int:
-    """Calculate position offset based on alignment.
+    """Calculate position offset for image alignment.
     
     Args:
-        position: Position string (e.g., "left", "center", "right")
-        source_size: Size of source element
-        target_size: Size of target container
+        position: Position string (left, center, right or top, center, bottom)
+        source_size: Size of source dimension
+        target_size: Size of target dimension
         
     Returns:
         Position offset
     """
-    position = position.lower()
-    if "left" in position or "top" in position:
+    if position in ["left", "top"]:
         return 0
-    elif "right" in position or "bottom" in position:
+    elif position in ["right", "bottom"]:
         return target_size - source_size
     else:  # center
         return (target_size - source_size) // 2
@@ -145,52 +112,36 @@ def crop_image(
     position: str = "center",
     min_size: int = 1
 ) -> Image.Image:
-    """Crop image to specified dimensions.
+    """Crop image to target dimensions.
     
     Args:
-        image: Input PIL image
+        image: Input image
         target_width: Target width
         target_height: Target height
-        position: Crop position (e.g., "center", "top left")
-        min_size: Minimum width and height
+        position: Image position
+        min_size: Minimum size limit
         
     Returns:
-        Cropped PIL image
-        
-    Raises:
-        ValueError: If image is None or invalid
+        Cropped image
     """
-    if image is None:
-        raise ValueError("Input image cannot be None")
+    if target_width <= 0 or target_height <= 0:
+        raise ValueError("Target dimensions must be positive")
+    if min_size <= 0:
+        raise ValueError("Minimum size must be positive")
         
-    # Ensure target dimensions not smaller than minimum
-    target_width = _ensure_min_size(target_width, min_size)
-    target_height = _ensure_min_size(target_height, min_size)
-    
-    # Get original dimensions
+    # Get image dimensions
     width, height = image.size
     
-    # Return if dimensions already match
-    if height == target_height and width == target_width:
-        return image
-    
-    # Scale up if target larger than source
-    if width < target_width or height < target_height:
-        scale_ratio = max(target_width / width, target_height / height)
-        new_width = int(width * scale_ratio)
-        new_height = int(height * scale_ratio)
-        image = image.resize((new_width, new_height), Image.LANCZOS)
-        width, height = new_width, new_height
+    # Calculate crop dimensions
+    crop_width = min(width, target_width)
+    crop_height = min(height, target_height)
     
     # Calculate crop position
-    x_start = _calculate_position(position, target_width, width)
-    y_start = _calculate_position(position, target_height, height)
+    left = _calculate_position(position, crop_width, width)
+    top = _calculate_position(position, crop_height, height)
     
-    # Ensure crop area within image bounds
-    x_start = max(0, min(x_start, width - target_width))
-    y_start = max(0, min(y_start, height - target_height))
-    
-    return image.crop((x_start, y_start, x_start + target_width, y_start + target_height))
+    # Perform crop
+    return image.crop((left, top, left + crop_width, top + crop_height))
 
 def scale_with_padding(
     image: Image.Image,
@@ -201,58 +152,50 @@ def scale_with_padding(
     padding_color: Tuple[int, int, int, int] = (0, 0, 0, 0),
     min_size: int = 1
 ) -> Image.Image:
-    """Scale image proportionally and add padding to maintain canvas size.
+    """Scale image with padding to target dimensions.
     
     Args:
-        image: Input PIL image
+        image: Input image
         target_width: Target width
         target_height: Target height
-        position: Image position on canvas
-        interpolation: Interpolation method (PIL constant)
-        padding_color: RGBA color for padding area
-        min_size: Minimum width and height
+        position: Image position
+        interpolation: Interpolation method
+        padding_color: RGBA color for padding
+        min_size: Minimum size limit
         
     Returns:
-        Scaled and padded PIL image
-        
-    Raises:
-        ValueError: If image is None or invalid
+        Scaled and padded image
     """
-    if image is None:
-        raise ValueError("Input image cannot be None")
+    if target_width <= 0 or target_height <= 0:
+        raise ValueError("Target dimensions must be positive")
+    if min_size <= 0:
+        raise ValueError("Minimum size must be positive")
         
-    # Ensure target dimensions not smaller than minimum
-    target_width = _ensure_min_size(target_width, min_size)
-    target_height = _ensure_min_size(target_height, min_size)
-    
-    # Get original dimensions
+    # Get image dimensions
     width, height = image.size
     
-    # Return if dimensions already match
-    if height == target_height and width == target_width:
-        return image
+    # Calculate scale factors
+    width_scale = target_width / width
+    height_scale = target_height / height
+    scale = min(width_scale, height_scale)
     
-    # Calculate proportional scale ratio
-    ratio = min(target_width / width, target_height / height)
+    # Calculate new dimensions
+    new_width = int(width * scale)
+    new_height = int(height * scale)
     
-    # Calculate scaled dimensions
-    new_width = _ensure_min_size(int(width * ratio), min_size)
-    new_height = _ensure_min_size(int(height * ratio), min_size)
+    # Resize image
+    resized = image.resize((new_width, new_height), interpolation)
     
-    # Scale image
-    resized_image = image.resize((new_width, new_height), interpolation)
-    
-    # Create new canvas
-    new_image = Image.new("RGBA", (target_width, target_height), padding_color)
+    # Create new image with padding
+    result = Image.new("RGBA" if image.mode == "RGBA" else "RGB", 
+                      (target_width, target_height), 
+                      padding_color)
     
     # Calculate paste position
-    x = _calculate_position(position, new_width, target_width)
-    y = _calculate_position(position, new_height, target_height)
+    left = _calculate_position(position, new_width, target_width)
+    top = _calculate_position(position, new_height, target_height)
     
-    # Paste scaled image
-    if resized_image.mode == "RGBA":
-        new_image.paste(resized_image, (x, y), resized_image)
-    else:
-        new_image.paste(resized_image, (x, y))
+    # Paste resized image
+    result.paste(resized, (left, top))
     
-    return new_image 
+    return result 

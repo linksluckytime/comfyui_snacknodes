@@ -53,6 +53,7 @@ wheels/
 *.egg-info/
 .installed.cfg
 *.egg
+comfyui_snacknodes.egg-info/
 
 # PyInstaller
 #  Usually these files are written by a python script from a template
@@ -136,9 +137,6 @@ htmlcov/
 
 # OS
 Thumbs.db
-
-# Project specific
-comfyui_snacknodes.egg-info/
 
 # Temporary files
 h origin --delete*

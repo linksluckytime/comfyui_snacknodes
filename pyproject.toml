@@ -5,18 +5,18 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "comfyui_snacknodes"
-description = "When life doesn't dish out candy, go grab a bag of awesome snacks to fill that void."
-version = "0.0.9"
+description = "A comprehensive collection of ComfyUI nodes designed to reduce reliance on multiple third-party node packages."
+version = "0.1.0"
 authors = [
     {name = "linksluckytime", email = "linksluckytime@gmail.com"}
 ]
 readme = "README.md"
 license = {text = "GNU General Public License v3"}
 dependencies = [
-    "torch>=2.0.0",
-    "numpy>=1.21.0",
-    "pillow>=9.0.0",
-    "opencv-python-headless>=4.5.0"
+    "torch",
+    "numpy",
+    "pillow",
+    "opencv-python-headless"
 ]
 
 [project.urls]

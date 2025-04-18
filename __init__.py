@@ -1,7 +1,5 @@
 """ComfyUI SnackNodes package."""
 
-__version__ = "0.0.7"
-
 # Import nodes
 from .nodes.images.image_info import ImageInfo
 from .nodes.images.image_scaler import ImageScaler
