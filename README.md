@@ -20,7 +20,7 @@ When life doesn't dish out candy, go grab a bag of awesome snacks to fill that v
 
 Join our Discord community for discussions, support, and updates:
 
-[![Discord](https://img.shields.io/discord/5VtMcGrw?label=Discord&logo=discord&style=for-the-badge)](https://discord.gg/5VtMcGrw)
+[![Discord](https://dcbadge.vercel.app/api/server/5VtMcGrw?style=flat)](https://discord.gg/5VtMcGrw)
 
 ## Acknowledgements 🙏
 
