@@ -1,10 +1,10 @@
 """ComfyUI SnackNodes package."""
 
 # Import nodes
-from .nodes.images.image_info import ImageInfo
-from .nodes.images.image_scaler import ImageScaler
-from .nodes.feature.text_box import TextBox
-from .nodes.feature.text_processor import TextProcessor
+from .src.nodes.images.image_info import ImageInfo
+from .src.nodes.images.image_scaler import ImageScaler
+from .src.nodes.feature.text_box import TextBox
+from .src.nodes.feature.text_processor import TextProcessor
 
 NODE_CLASS_MAPPINGS = {
     "ImageInfo": ImageInfo,
@@ -20,7 +20,7 @@ NODE_DISPLAY_NAME_MAPPINGS = {
     "TextProcessor": "Text Processor 🍿",
 }
 
-WEB_DIRECTORY = "web"
+WEB_DIRECTORY = "src/web"
 
 # Export node mappings
 __all__ = ["ImageInfo", "ImageScaler", "TextBox", "TextProcessor"]

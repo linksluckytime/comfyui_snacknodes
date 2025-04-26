@@ -2,14 +2,17 @@
 name = "snacknodes"
 description = "A collection of ComfyUI nodes including Image Info (extract image details), Image Scaler (resize with padding), Text Box (multiline input), and Text Processor (concatenate/search-replace)."
 version = "1.0.0"
-license = {file = "LICENSE"}
-dependencies = ["# Core dependencies", "torch", "numpy", "pillow", "opencv-python-headless"]
+license-files = ["LICENSE"]
+dependencies = ["torch", "numpy", "pillow", "opencv-python-headless"]
 
 [project.urls]
 Repository = "https://github.com/linksluckytime/comfyui_snacknodes"
 #  Used by Comfy Registry https://comfyregistry.org
 
 [tool.comfy]
-PublisherId = ""
+PublisherId = "linksluckytime"
 DisplayName = "comfyui_snacknodes"
-Icon = ""
+Icon = "https://raw.githubusercontent.com/linksluckytime/comfyui_snacknodes/main/web/icon.png"
+
+[tool.setuptools.packages.find]
+where = ["src"]

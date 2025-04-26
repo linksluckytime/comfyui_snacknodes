@@ -4,6 +4,7 @@ import torch
 import numpy as np
 from PIL import Image
 from typing import Tuple, Optional, Any, Union
+import cv2
 
 def _align_to_factor(value: int, factor: int, min_size: int) -> int:
     """Align value to nearest multiple of factor, ensuring minimum size.
@@ -64,22 +65,48 @@ def calculate_dimensions(
         # Calculate new dimensions
         new_width = int(width * scale)
         new_height = int(height * scale)
+        
+        # Align dimensions to scaling factor
+        new_width = _align_to_factor(new_width, scaling_factor, min_size)
+        new_height = _align_to_factor(new_height, scaling_factor, min_size)
+        
+        # If aligned dimensions exceed pixel budget, allow slight cropping
+        if new_width * new_height > max_pixels:
+            # Calculate maximum possible dimensions while maintaining ratio
+            max_width = int(np.sqrt(max_pixels * original_ratio))
+            max_height = int(max_width / original_ratio)
+            
+            # Align to scaling factor
+            max_width = _align_to_factor(max_width, scaling_factor, min_size)
+            max_height = _align_to_factor(max_height, scaling_factor, min_size)
+            
+            # Use the smaller of the two options
+            if max_width * max_height < new_width * new_height:
+                new_width, new_height = max_width, max_height
+                
+            # If still too large, allow slight cropping
+            if new_width * new_height > max_pixels:
+                # Calculate maximum possible dimensions that fit within pixel budget
+                max_area = max_pixels
+                max_width = int(np.sqrt(max_area * original_ratio))
+                max_height = int(max_width / original_ratio)
+                
+                # Align to scaling factor
+                max_width = _align_to_factor(max_width, scaling_factor, min_size)
+                max_height = _align_to_factor(max_height, scaling_factor, min_size)
+                
+                # Ensure we don't exceed pixel budget
+                while max_width * max_height > max_pixels:
+                    max_width -= scaling_factor
+                    max_height = int(max_width / original_ratio)
+                    max_height = _align_to_factor(max_height, scaling_factor, min_size)
+                
+                new_width, new_height = max_width, max_height
     else:
         # Square output
         new_width = new_height = int(np.sqrt(max_pixels))
-    
-    # Align dimensions to scaling factor
-    new_width = _align_to_factor(new_width, scaling_factor, min_size)
-    new_height = _align_to_factor(new_height, scaling_factor, min_size)
-    
-    # Ensure within pixel budget
-    while new_width * new_height > max_pixels:
-        if new_width >= new_height and new_width > scaling_factor:
-            new_width -= scaling_factor
-        elif new_height > scaling_factor:
-            new_height -= scaling_factor
-        else:
-            break
+        new_width = _align_to_factor(new_width, scaling_factor, min_size)
+        new_height = _align_to_factor(new_height, scaling_factor, min_size)
     
     return new_width, new_height
 
@@ -106,42 +133,63 @@ def _calculate_position(
         return (target_size - source_size) // 2
 
 def crop_image(
-    image: Image.Image,
+    image: np.ndarray,
     target_width: int,
     target_height: int,
-    position: str = "center",
-    min_size: int = 1
-) -> Image.Image:
-    """Crop image to target dimensions.
+    relative_position: str = "center"
+) -> np.ndarray:
+    """Crop image to target dimensions while maintaining aspect ratio.
     
     Args:
-        image: Input image
+        image: Input image array
         target_width: Target width
         target_height: Target height
-        position: Image position
-        min_size: Minimum size limit
+        relative_position: Position to crop from ("top", "center", "bottom", "left", "right")
         
     Returns:
-        Cropped image
+        Cropped image array
     """
+    if image is None:
+        raise ValueError("Image cannot be None")
     if target_width <= 0 or target_height <= 0:
         raise ValueError("Target dimensions must be positive")
-    if min_size <= 0:
-        raise ValueError("Minimum size must be positive")
         
-    # Get image dimensions
-    width, height = image.size
+    height, width = image.shape[:2]
     
     # Calculate crop dimensions
-    crop_width = min(width, target_width)
-    crop_height = min(height, target_height)
-    
+    if width / height > target_width / target_height:
+        # Image is wider than target
+        new_width = int(height * target_width / target_height)
+        new_height = height
+    else:
+        # Image is taller than target
+        new_height = int(width * target_height / target_width)
+        new_width = width
+        
     # Calculate crop position
-    left = _calculate_position(position, crop_width, width)
-    top = _calculate_position(position, crop_height, height)
+    if relative_position == "top":
+        start_y = 0
+    elif relative_position == "bottom":
+        start_y = height - new_height
+    else:  # center
+        start_y = (height - new_height) // 2
+        
+    if relative_position == "left":
+        start_x = 0
+    elif relative_position == "right":
+        start_x = width - new_width
+    else:  # center
+        start_x = (width - new_width) // 2
+        
+    # Ensure crop coordinates are valid
+    start_x = max(0, min(start_x, width - new_width))
+    start_y = max(0, min(start_y, height - new_height))
     
     # Perform crop
-    return image.crop((left, top, left + crop_width, top + crop_height))
+    cropped = image[start_y:start_y + new_height, start_x:start_x + new_width]
+    
+    # Resize to target dimensions
+    return cv2.resize(cropped, (target_width, target_height), interpolation=cv2.INTER_AREA)
 
 def scale_with_padding(
     image: Image.Image,
