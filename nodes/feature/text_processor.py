@@ -26,8 +26,16 @@ def _concatenate_texts(texts: List[str], optimize: bool = True) -> str:
         return ""
     
     if optimize:
-        # 使用逗号连接，确保没有多余的空格
-        return ", ".join(valid_texts)
+        # 处理每个文本,只在非句号结尾的文本后添加逗号
+        processed_texts = []
+        for i, text in enumerate(valid_texts):
+            if i < len(valid_texts) - 1:
+                if text.endswith('.'):
+                    text = text[:-1]
+                text += ','
+            processed_texts.append(text)
+        # 使用空格连接
+        return " ".join(processed_texts)
     else:
         # 不优化，直接连接
         return "".join(valid_texts)

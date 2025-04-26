@@ -16,6 +16,12 @@ When life doesn't dish out candy, go grab a bag of awesome snacks to fill that v
   - Text Box: Create and manipulate text boxes with customizable properties
   - Text Processor: Process and transform text with various operations and formatting options
 
+## Community 💬
+
+Join our Discord community for discussions, support, and updates:
+
+[![Discord](https://img.shields.io/discord/5VtMcGrw?label=Discord&logo=discord&style=for-the-badge)](https://discord.gg/5VtMcGrw)
+
 ## Acknowledgements 🙏
 
 Special thanks to the following projects and their creators:

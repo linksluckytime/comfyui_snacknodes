@@ -1,35 +1,15 @@
-# pyproject.toml
-[build-system]
-requires = ["setuptools>=65.0.0"]
-build-backend = "setuptools.build_meta"
-
 [project]
-name = "comfyui_snacknodes"
-description = "A comprehensive collection of ComfyUI nodes designed to reduce reliance on multiple third-party node packages."
+name = "snacknodes"
+description = "A collection of ComfyUI nodes including Image Info (extract image details), Image Scaler (resize with padding), Text Box (multiline input), and Text Processor (concatenate/search-replace)."
 version = "1.0.0"
-authors = [
-    {name = "linksluckytime", email = "linksluckytime@gmail.com"}
-]
-readme = "README.md"
-license = {text = "GNU General Public License v3"}
-dependencies = [
-    "torch",
-    "numpy",
-    "pillow",
-    "opencv-python-headless"
-]
+license = {file = "LICENSE"}
+dependencies = ["# Core dependencies", "torch", "numpy", "pillow", "opencv-python-headless"]
 
 [project.urls]
 Repository = "https://github.com/linksluckytime/comfyui_snacknodes"
-
-[tool.setuptools]
-packages = ["nodes", "utils", "config"]
-
-[tool.setuptools.package-data]
-"*" = ["*.png", "*.json"]
-"comfyui_snacknodes" = ["web/*"]
+#  Used by Comfy Registry https://comfyregistry.org
 
 [tool.comfy]
-PublisherId = "linksluckytime"
+PublisherId = ""
 DisplayName = "comfyui_snacknodes"
-Icon = "https://raw.githubusercontent.com/linksluckytime/comfyui_snacknodes/main/web/icon.png"
+Icon = ""
